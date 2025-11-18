@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: velours-postgres-prod
+    environment:
+      POSTGRES_USER: medusa
+      POSTGRES_PASSWORD: medusapass
+      POSTGRES_DB: velours_secrets
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database_backup.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "7834:5432"  # Rastgele port
+    restart: unless-stopped
+
+  app:
+    build: .
+    container_name: velours-app-prod
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://medusa:medusapass@postgres:5432/velours_secrets?schema=public
+    ports:
+      - "2005:3000"  # İstediğin port
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    volumes:
+      - ./public:/app/public
+      - uploaded_images:/app/public/urun-gorsel
+
+volumes:
+  postgres_data:
+  uploaded_images:
